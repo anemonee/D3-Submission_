@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="http://dimplejs.org/dist/dimple.v2.0.0.min.js"></script>
+  <style>
+    circle.dimple-series-1 {
+      fill: red;
+    }
+
+    h2 {
+      text-align: center;
+    }
+  </style>
+  <script type="text/javascript">
+    function draw(data) {
+
+      /*
+        D3.js setup code
+      */
+
+      "use strict";
+      var margin = 75,
+        width = 950 - margin,
+        height = 500 - margin;
+      d3.select("body").append("h2").text("Titanic survivors by Sex and Age")
+        .append("h5")
+        .text("More Women and Children survived Titanic catastrophe than adult Males")
+        .append("h6")
+        .text("0 = not survived, 1 = survived");
+
+      var svg = d3.select("body")
+        .append("svg")
+        .attr("width", width + margin)
+        .attr("height", height + margin)
+        .append('g')
+        .attr('class', 'chart');
+      debugger;
+
+      /*
+        Dimple.js Chart construction code
+      */
+      data = data.sort(function (a, b) {
+        return d3.ascending(a.Age, b.Age)
+      });
+
+      var indicator = new dimple.chart(svg, data);
+      var frame = 3000;
+      var firstTick = true;
+
+      indicator.setBounds(920, 50, 50, 100);
+      var y = indicator.addCategoryAxis("y", "Sex");
+      var x = indicator.addMeasureAxis("x", "PassengerId");
+      x.hidden = true;
+      var s = indicator.addSeries(null, dimple.plot.bar);
+      s.addEventHandler("click", onClick);
+      indicator.draw();
+      
+     
+      var myChart = new dimple.chart(svg, data);
+      var x = myChart.addCategoryAxis("x", "Age");
+      var y = myChart.addPctAxis("y", "PassengerId");
+      y.title = "Passengers";
+      myChart.addSeries('Survived', dimple.plot.bar);
+      myChart.addLegend(900, 300, 50, 100);
+
+      var story = myChart.setStoryboard(["Sex"], onTick);
+      story.frameDuration = frame;
+      myChart.draw();
+
+
+      // On click of the side chart
+      function onClick(e) {
+        // Pause the animation
+        story.pauseAnimation();
+        // If it is already selected resume the animation
+        // otherwise pause and move to the selected month
+        if (e.yValue === story.getFrameValue()) {
+          story.startAnimation();
+        } else {
+          story.goToFrame(e.yValue);
+          story.pauseAnimation();
+        }
+      }
+
+
+      // On tick of the main charts storyboard
+      function onTick(e) {
+        if (!firstTick) {
+          // Color all shapes the same
+          s.shapes
+            .transition()
+            .duration(frame / 2)
+            .style("fill", function (d) { return (d.y === e ? indicatorColor.fill : defaultColor.fill) })
+            .style("stroke", function (d) { return (d.y === e ? indicatorColor.stroke : defaultColor.stroke) });
+        }
+        firstTick = false;
+      }
+
+
+    };
+  </script>
+</head>
+
+<body>
+  <script type="text/javascript">
+    /*
+        Use D3 (not dimple.js) to load the TSV file
+        and pass the contents of it to the draw function
+        */
+    d3.csv("titanic-data.csv", draw);
+  </script>
+</body>
+
+</html>
