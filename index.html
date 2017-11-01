@@ -5,15 +5,21 @@
   <meta charset="utf-8">
   <script src="http://d3js.org/d3.v3.min.js"></script>
   <script src="http://dimplejs.org/dist/dimple.v2.0.0.min.js"></script>
+
   <style>
-    circle.dimple-series-1 {
-      fill: red;
+    h2 {
+      text-align: left;
     }
 
-    h2 {
-      text-align: center;
+    h5 {
+      text-align: left;
+    }
+
+    h6 {
+      text-align: left;
     }
   </style>
+
   <script type="text/javascript">
     function draw(data) {
 
@@ -23,9 +29,12 @@
 
       "use strict";
       var margin = 75,
-        width = 950 - margin,
-        height = 500 - margin;
-      d3.select("body").append("h2").text("Titanic survivors by Sex and Age")
+        width = 950,
+        height = 500;
+
+      d3.select("body")
+        .append("h2")
+        .text("Titanic survivors by Sex and Age")
         .append("h5")
         .text("More Women and Children survived Titanic catastrophe than adult Males")
         .append("h6")
@@ -33,41 +42,68 @@
 
       var svg = d3.select("body")
         .append("svg")
-        .attr("width", width + margin)
-        .attr("height", height + margin)
+        .attr("width", width)
+        .attr("height", height)
         .append('g')
         .attr('class', 'chart');
-      debugger;
 
       /*
         Dimple.js Chart construction code
       */
-      data = data.sort(function (a, b) {
-        return d3.ascending(a.Age, b.Age)
-      });
 
+      // Create indicator chart
       var indicator = new dimple.chart(svg, data);
+
+      indicator.defaultColors = [
+        new dimple.color("#F8F8F8"),
+        new dimple.color("#0000ff")
+      ];
+
+      // Assign grey as the default and green for selection
+      var defaultColor = indicator.defaultColors[0];
+      var indicatorColor = indicator.defaultColors[1];
+
+      // Set frame duration for animation (milliseconds)
       var frame = 3000;
       var firstTick = true;
 
+      // Define placement for indicator bar chart
       indicator.setBounds(920, 50, 50, 100);
+
+      //Add Gender along the y axis and PassengerId for x axis
       var y = indicator.addCategoryAxis("y", "Sex");
       var x = indicator.addMeasureAxis("x", "PassengerId");
       x.hidden = true;
+
+      // Add the bars to the indicator and add event handlers
       var s = indicator.addSeries(null, dimple.plot.bar);
       s.addEventHandler("click", onClick);
+
+      // Draw the indicator chart
       indicator.draw();
-      
-     
+
+      // Draw the main chart
       var myChart = new dimple.chart(svg, data);
       var x = myChart.addCategoryAxis("x", "Age");
       var y = myChart.addPctAxis("y", "PassengerId");
       y.title = "Passengers";
-      myChart.addSeries('Survived', dimple.plot.bar);
+      var mySeries = myChart.addSeries("Survived", dimple.plot.bar);
+
+      // Arrange x axis in ascending order of Age
+      x.addOrderRule("Age", false);
+
+      // Switch colours of stacked bars so that red appears for "not survived". More intuitive that way
+      mySeries.addOrderRule("Survived", true);
       myChart.addLegend(900, 300, 50, 100);
 
+      //Add a storyboard to the main chart and set the tick event
       var story = myChart.setStoryboard(["Sex"], onTick);
-      story.frameDuration = frame;
+
+      //Frame duration to be slowed down - as per feedback
+      story.frameDuration = frame * 2;
+
+      // Draw the main chart
+
       myChart.draw();
 
 
@@ -75,8 +111,7 @@
       function onClick(e) {
         // Pause the animation
         story.pauseAnimation();
-        // If it is already selected resume the animation
-        // otherwise pause and move to the selected month
+        // If it is already selected resume the animation otherwise pause and move to the selection
         if (e.yValue === story.getFrameValue()) {
           story.startAnimation();
         } else {
@@ -87,14 +122,14 @@
 
 
       // On tick of the main charts storyboard
-      function onTick(e) {
+      function onTick(g) {
         if (!firstTick) {
           // Color all shapes the same
           s.shapes
             .transition()
             .duration(frame / 2)
-            .style("fill", function (d) { return (d.y === e ? indicatorColor.fill : defaultColor.fill) })
-            .style("stroke", function (d) { return (d.y === e ? indicatorColor.stroke : defaultColor.stroke) });
+            .style("fill", function (d) { return (d.y === g ? indicatorColor.fill : defaultColor.fill) })
+            .style("stroke", function (f) { return (f.y === g ? indicatorColor.stroke : defaultColor.stroke) });
         }
         firstTick = false;
       }
