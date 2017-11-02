@@ -36,9 +36,7 @@
         .append("h2")
         .text("Titanic survivors by Sex and Age")
         .append("h5")
-        .text("More Women and Children survived Titanic catastrophe than adult Males")
-        .append("h6")
-        .text("0 = not survived, 1 = survived");
+        .text("More Women and Children survived Titanic catastrophe than adult Males");
 
       var svg = d3.select("body")
         .append("svg")
@@ -64,7 +62,7 @@
       var indicatorColor = indicator.defaultColors[1];
 
       // Set frame duration for animation (milliseconds)
-      var frame = 3000;
+      var frame = 500;
       var firstTick = true;
 
       // Define placement for indicator bar chart
@@ -84,23 +82,23 @@
 
       // Draw the main chart
       var myChart = new dimple.chart(svg, data);
-      var x = myChart.addCategoryAxis("x", "Age");
+      var x = myChart.addCategoryAxis("x", "AgeGroup");
       var y = myChart.addPctAxis("y", "PassengerId");
       y.title = "Passengers";
-      var mySeries = myChart.addSeries("Survived", dimple.plot.bar);
+      var mySeries = myChart.addSeries("Survival", dimple.plot.bar);
 
       // Arrange x axis in ascending order of Age
-      x.addOrderRule("Age", false);
+      x.addOrderRule("AgeGroup", false);
 
       // Switch colours of stacked bars so that red appears for "not survived". More intuitive that way
       mySeries.addOrderRule("Survived", true);
-      myChart.addLegend(900, 300, 50, 100);
+      var legend = myChart.addLegend(870, 250, 50, 100);
 
       //Add a storyboard to the main chart and set the tick event
       var story = myChart.setStoryboard(["Sex"], onTick);
 
       //Frame duration to be slowed down - as per feedback
-      story.frameDuration = frame * 2;
+      story.frameDuration = frame * 10  ;
 
       // Draw the main chart
 
@@ -111,7 +109,7 @@
       function onClick(e) {
         // Pause the animation
         story.pauseAnimation();
-        // If it is already selected resume the animation otherwise pause and move to the selection
+        // If it is already selected resume the animation otherwise pause and move to the selection 
         if (e.yValue === story.getFrameValue()) {
           story.startAnimation();
         } else {
@@ -128,8 +126,12 @@
           s.shapes
             .transition()
             .duration(frame / 2)
-            .style("fill", function (d) { return (d.y === g ? indicatorColor.fill : defaultColor.fill) })
-            .style("stroke", function (f) { return (f.y === g ? indicatorColor.stroke : defaultColor.stroke) });
+            .style("fill", function (d) {
+              return (d.y === g ? indicatorColor.fill : defaultColor.fill)
+            })
+            .style("stroke", function (f) {
+              return (f.y === g ? indicatorColor.stroke : defaultColor.stroke)
+            });
         }
         firstTick = false;
       }
@@ -141,10 +143,7 @@
 
 <body>
   <script type="text/javascript">
-    /*
-        Use D3 (not dimple.js) to load the TSV file
-        and pass the contents of it to the draw function
-        */
+    // Use D3 (not dimple.js) to load the TSV file and pass the contents of it to the draw function
     d3.csv("titanic-data.csv", draw);
   </script>
 </body>
